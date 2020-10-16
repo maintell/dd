@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"runtime"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -22,6 +23,12 @@ var gChild *os.Process                 // 子进程
 // force: 无论child是否正常退出都重启，否则仅在程序异常退出时才重启
 // interval: 检查程序更新频率，0=不检查
 func Daemon(daemon, force bool, interval time.Duration) {
+
+	// 避免 go run . 指令
+	if !strings.Contains(os.Getenv("_"), "/go") {
+		return
+	}
+
 	gForce = force
 	gCheckUpdateInterval = interval
 
