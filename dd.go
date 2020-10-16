@@ -25,7 +25,7 @@ var gChild *os.Process                 // 子进程
 func Daemon(daemon, force bool, interval time.Duration) {
 
 	// 避免 go run . 指令
-	if !strings.HasSuffix(os.Getenv("_"), "/go") {
+	if strings.HasSuffix(os.Getenv("_"), "/go") {
 		return
 	}
 
