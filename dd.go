@@ -1,12 +1,15 @@
 package dd
 
 import (
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"os/signal"
 	"runtime"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -19,10 +22,11 @@ var gQuit = false                      // 程序将退出，不在创建子进�
 var gChild *os.Process                 // 子进程
 
 // Daemon 启动守护进程
+// pid: pid保存文件路径，用于关闭程序
 // daemon: 后台运行
 // force: 无论child是否正常退出都重启，否则仅在程序异常退出时才重启
 // interval: 检查程序更新频率，0=不检查
-func Daemon(daemon, force bool, interval time.Duration) {
+func Daemon(pidFile string, daemon, force bool, interval time.Duration) {
 
 	// 避免 go run . 指令
 	if strings.HasSuffix(os.Getenv("_"), "/go") {
@@ -41,8 +45,28 @@ func Daemon(daemon, force bool, interval time.Duration) {
 		os.Exit(0)
 	}
 
+	if pidFile != "" {
+		pid := os.Getpid()
+		ioutil.WriteFile(pidFile, []byte(strconv.Itoa(pid)), 0644)
+	}
+
 	// 启动守护进程
 	parent()
+}
+
+func Close(pidFile string) error {
+	if pidFile == "" {
+		return errors.New("pidFile is empty")
+	}
+	bs, err := ioutil.ReadFile(pidFile)
+	if err != nil {
+		return err
+	}
+	pid, err := strconv.Atoi(string(bs))
+	if err != nil {
+		return err
+	}
+	return syscall.Kill(pid, 15)
 }
 
 func parent() {
