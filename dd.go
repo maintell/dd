@@ -66,7 +66,11 @@ func Close(pidFile string) error {
 	if err != nil {
 		return err
 	}
-	return syscall.Kill(pid, 15)
+	process, errFindProcess := os.FindProcess(pid)
+	if errFindProcess != nil {
+		return errFindProcess
+	}
+	return process.Kill()
 }
 
 func parent() {
